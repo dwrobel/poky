@@ -123,6 +123,8 @@ def setup_hosttools_dir(dest, toolsvar, d, fatal=True):
     origbbenv = d.getVar("BB_ORIGENV", False)
     path = origbbenv.getVar("PATH")
     bb.utils.mkdirhier(dest)
+    dest2 = dest + "2"
+    bb.utils.mkdirhier(dest2)
     notfound = []
     for tool in tools:
         desttool = os.path.join(dest, tool)
@@ -131,6 +133,16 @@ def setup_hosttools_dir(dest, toolsvar, d, fatal=True):
             if os.path.islink(desttool):
                 os.unlink(desttool)
             srctool = bb.utils.which(path, tool, executable=True)
+            if os.path.islink(srctool):
+                # example: /usr/lib64/ccache/gcc -> ../../bin/ccache
+                # srctool2 = <target-dir>/gcc
+                srctool2 = bb.utils.which(path, tool, executable=True, direction=1)
+                # tool2 = "gcc"
+                tool2 = os.path.basename(srctool2)
+                desttool2 = os.path.join(dest2, tool2)
+                if os.path.islink(desttool2):
+                    os.unlink(desttool2)
+                os.symlink(srctool2, desttool2)
             if srctool:
                 os.symlink(srctool, desttool)
             else:
